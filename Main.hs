@@ -6,10 +6,9 @@ import Text.ParserCombinators.Parsec
 
 main = do rs <- readFile "data/repos.txt"
           ls <- readFile "data/lang.txt"
+          us <- readFile "data/data.txt"
           repotable <- parseRepos (take 100 $ lines rs) (take 100 $ lines ls)
-          repos <- toList repotable
-          print repos
-          --xs <- readFile "data/data.txt"
-          --usertable <- parseUsers $ take 100 $ lines xs
-          --users <- toList usertable
-          --print users
+          usertable <- parseUsers $ take 100 $ lines xs
+
+          users <- toList usertable
+          print users
