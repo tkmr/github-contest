@@ -1,5 +1,6 @@
 module GcParser where
 import GcType
+import Data.HashTable
 import Text.ParserCombinators.Parsec
 
 --for debug
@@ -17,6 +18,31 @@ runLex p input = run (do { many whiteSpace
                          ; return x
                            }) input
 
+runParse parser []     = []
+runParse parser (x:xs) = case (parse parser "" x) of
+                           Left error -> runParse parser xs
+                           Right datas -> datas:(runParse parser xs)
+
+--Parser                                          
+parseRepos :: [String] -> [String] -> IO (HashTable Int Repository)
+parseRepos repo_source lang_source = newtable (runParse repository_file repo_source) (runParse language_file lang_source)
+    where
+      newtable repos langs = do table <- new (==) hashInt :: IO (HashTable Int Repository)
+                                foldr (>>) (return table) $ (map (addrepos table langs) repos)
+
+      addrepos table langs repository = case Prelude.lookup (repo_id repository) langs of
+                                          Nothing -> insert table (repo_id repository) repository
+                                          Just lang -> insert table (repo_id repository) (setRepositoryLang repository lang)
+
+                                                       
+parseUsers :: [String] -> IO (HashTable Int User)
+parseUsers user_source = newtable $ runParse user_file user_source
+    where
+      newtable users = do table <- new (==) hashInt :: IO (HashTable Int User)
+                          foldr (>>) (return table) $ map (\u -> insert table (user_id u) u) users
+
+
+--Parsec
 whiteSpace = many1 (char ' ')
 
 number :: Parser Int

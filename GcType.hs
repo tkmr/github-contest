@@ -1,5 +1,8 @@
 module GcType where
 
+setRepositoryLang (Repository id owner name _) lang            = Repository id owner name lang
+setRepositoryLang (ForkedRepository id owner name _ from) lang = ForkedRepository id owner name lang from
+    
 data Repository = Repository {
       repo_id::Int,
       repo_owner::String,

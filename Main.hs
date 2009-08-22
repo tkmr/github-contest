@@ -1,11 +1,15 @@
 module Main where
+import Data.HashTable
 import GcType
 import GcParser
 import Text.ParserCombinators.Parsec
 
-main = do xs <- readFile "data/repos.txt"
-          print $ map doParse $ take 10 $ lines xs
-    where doParse x = parse repository "" x
---          case (parse repository "" $ take 1 xs) of
---            Left err = print err
---            Right x  = print x
+main = do rs <- readFile "data/repos.txt"
+          ls <- readFile "data/lang.txt"
+          repotable <- parseRepos (take 100 $ lines rs) (take 100 $ lines ls)
+          repos <- toList repotable
+          print repos
+          --xs <- readFile "data/data.txt"
+          --usertable <- parseUsers $ take 100 $ lines xs
+          --users <- toList usertable
+          --print users
