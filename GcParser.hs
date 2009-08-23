@@ -22,8 +22,8 @@ runParse parser []     = []
 runParse parser (x:xs) = case (parse parser "" x) of
                            Left error -> runParse parser xs
                            Right datas -> datas:(runParse parser xs)
-
---Parser                                          
+                                          
+--Parser
 parseRepos :: [String] -> [String] -> IO (HashTable Int Repository)
 parseRepos repo_source lang_source = newtable (runParse repository_file repo_source) (runParse language_file lang_source)
     where
@@ -34,15 +34,23 @@ parseRepos repo_source lang_source = newtable (runParse repository_file repo_sou
                                           Nothing -> insert table (repo_id repository) repository
                                           Just lang -> insert table (repo_id repository) (setRepositoryLang repository lang)
 
-                                                       
+
 parseUsers :: [String] -> IO (HashTable Int User)
 parseUsers user_source = newtable $ runParse user_file user_source
     where
       newtable users = do table <- new (==) hashInt :: IO (HashTable Int User)
-                          foldr (>>) (return table) $ map (\u -> insert table (user_id u) u) users
+                          foldr (>>) (return table) $ map (adduser table) users
 
+      adduser table (User id repos) = do user <- Data.HashTable.lookup table id
+                                         case user of
+                                           Nothing                -> update table id (User id repos)
+                                           Just (User _ oldrepos) -> update table id (User id (oldrepos ++ repos)) --(adjust_score $ oldrepos ++ repos))
+
+      adjust_score repos = map (\(id, score) -> (id, (default_score / (fromIntegral $ length repos)))) repos
 
 --Parsec
+default_score = 100.0
+
 whiteSpace = many1 (char ' ')
 
 number :: Parser Int
@@ -60,9 +68,9 @@ repository_file = do { id <- number
                      ; many (noneOf ",")
                      ; do { try(char ',')
                           ; forked <- number
-                          ; return $ ForkedRepository id name project [] forked
+                          ; return $ ForkedRepository id name project [] forked []
                           }
-                       <|> (return $ Repository id name project [])
+                       <|> (return $ Repository id name project [] [])
                      }
                   <?> "repo.txt"
 
@@ -70,7 +78,7 @@ user_file :: Parser User
 user_file = do { id <- number
                ; char ':'
                ; repo_id <- number
-               ; return $ User id [repo_id]
+               ; return $ User id [(repo_id, default_score)]
                }
             <?> "data.txt"
 
