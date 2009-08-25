@@ -2,39 +2,78 @@ module Recommend where
 import Data.Maybe
 import GcType
 import GcParser
+import Data.List
+import System.IO.Unsafe
+import System.Random
 
-data ScoreTable = ScoreTable { id::Int, scores::[(Int, Float)] }
+--util-------------------    
+randomize :: [Int] -> [Int]
+randomize list = sortBy comp list
+                 where comp a b = compare (random (a * b)) (random (a * b))
+                       random n = unsafePerformIO $ getStdRandom (randomR (1,n))
 
-class Similar a where
-    toScoreTable :: a -> ScoreTable    
-    similarDistance :: a -> a -> Float
-    similarDistance x y = similar_distance (toScoreTable x) (toScoreTable y)
+treeSize :: ScoreTree -> Int
+treeSize (ScoreTree _ _ l r) = 1 + (size l) + (size r)
+
+buildtree :: [(Int, Float)] -> ScoreTree
+buildtree []             = ScoreTree 
+buildtree (id, score):xs = ScoreTree id score (lnodes xs id) (rnodes xs id)
+    where
+      lnodes list sepid = buildtree [(id, score) | (id, score) <- list, id < sepid]
+      rnodes list sepid = buildtree [(id, score) | (id, score) <- list, id > sepid]
+                               
+-------------------------    
+data ScoreTable = ScoreTable { scores::[(Int, Float)] }
+data ScoreTree  = ScoreTree  { scoretree_id::Int, scoretree_value::Float, left::ScoreTree, right::ScoreTree }
                 
+class Similar a where
+    toScoreTable :: a -> ScoreTable
+                    
+    toScoreTree :: a -> ScoreTree
+    toScoreTree x = transform $ toScoreTable x
+        where
+          transform (ScoreTable scores) = buildtree $ toRandom scores
+          toRandom list = map (\(_, v) -> v) $ sortBy comp $ zip (randomkey list) list
+          comp (a, _) (b, _) = compare a b
+          randomkey list = randomize $ randomize $ map (\(i, _) -> i) list
+              
+    similarDistance :: a -> a -> Float
+    similarDistance x y = similar_distance (toScoreTree x) (toScoreTtree y)
+
 instance Similar User where
-    toScoreTable user = ScoreTable (user_id user) (watch_repos user)
+    toScoreTable user = ScoreTable (watch_repos user)
 
 instance Similar Repository where
-    toScoreTable repos = ScoreTable (repo_id repos) (mapMaybe (myScore $ repo_id repos) (watch_users repos))
+    toScoreTable repos = ScoreTable (mapMaybe (myScore $ repo_id repos) (watch_users repos))
                             where
                               myScore rid user = case Prelude.lookup rid (watch_repos user) of
                                                    Nothing    -> Nothing
                                                    Just score -> Just ((user_id user), score)
 
-similar_distance :: ScoreTable -> ScoreTable -> Float
-similar_distance sa sb = score_distance
-                           (sameList sa sb)
-                           (baseScore (length $ scores sa) (length $ scores sb) (length $ sameList sa sb))
+---------------------------                                                                 
+similarDistance :: ScoreTree -> ScoreTree -> Float
+similarDistance sa sb = distanceScore
+                          (sameCouples sa sb)
+                          (baseScore (treeSize sa) (treeSize sb) (length $ sameCouples sa sb))
 
-score_distance :: [((Int, Float), (Int, Float))] -> Float -> Float
-score_distance []   _    = 0.0
-score_distance list base = base / ((sqrt  $ sum $ [(scoreA - scoreB)^2 | ((_, scoreA), (_, scoreB)) <- list ]) + 1.0)
+distanceScore :: [((Int, Float), (Int, Float))] -> Float -> Float
+distanceScore []   _    = 0.0
+distanceScore list base = base / ((sqrt  $ sum $ [(scoreA - scoreB)^2 | ((_, scoreA), (_, scoreB)) <- list ]) + 1.0)
 
-                           
-sameList :: ScoreTable -> ScoreTable -> [((Int, Float), (Int, Float))]
-sameList (ScoreTable _ scoresA) (ScoreTable _ scoresB) = mapMaybe (sameScore scoresA) scoresB
+sameCouples :: ScoreTree -> ScoreTree -> [((Int, Float), (Int, Float))]
+sameCouples scoresA scoresB = tryAll (findFrom scoresA) scoresB
     where
-      sameScore scoresA (b_id, b_score) = case Prelude.lookup b_id scoresA of
-                                            Nothing      -> Nothing
-                                            Just a_score -> Just ((b_id, a_score), (b_id, b_score))
-
+      tryAll _ () = []
+      tryAll find (ScoreTree id value left right) =
+          case find id of
+            Nothing                            -> (tryAll f left) ++ (tryAll f right)
+            Just    (ScoreTree idA valueA _ _) -> ((id, value), (idA, valueA)):((tryAll f left) ++ (tryAll f right))
+                            
+      findFrom :: ScoreTree -> Int -> Maybe ScoreTree
+      findFrom ()                              target = Nothing
+      findFrom (ScoreTree id value left right) target = case id `compare` target of
+                                                          EQ -> Just (ScoreTree id value left right)
+                                                          GT -> (findFrom left target) 
+                                                          LT -> (findFrom right target) 
+          
 baseScore a b same = default_score * (fromIntegral (same * 2) / fromIntegral (a + b))
