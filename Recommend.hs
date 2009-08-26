@@ -12,20 +12,29 @@ randomize list = sortBy comp list
                  where comp a b = compare (random (a * b)) (random (a * b))
                        random n = unsafePerformIO $ getStdRandom (randomR (1,n))
 
-treeSize :: ScoreTree -> Int
-treeSize (ScoreTree _ _ l r) = 1 + (size l) + (size r)
+treeSize :: Maybe ScoreTree -> Int
+treeSize (Just (ScoreTree _ _ l r)) = 1 + (sum $ mapMaybe treeSize l:r:[])
 
 buildtree :: [(Int, Float)] -> ScoreTree
-buildtree []             = ScoreTree 
-buildtree (id, score):xs = ScoreTree id score (lnodes xs id) (rnodes xs id)
+buildtree ((id, score):xs) = ScoreTree id score (lnodes xs id) (rnodes xs id)
     where
-      lnodes list sepid = buildtree [(id, score) | (id, score) <- list, id < sepid]
-      rnodes list sepid = buildtree [(id, score) | (id, score) <- list, id > sepid]
-                               
+      lnodes list sepid = treeOrNothing [(id, score) | (id, score) <- list, id < sepid]
+      rnodes list sepid = treeOrNothing [(id, score) | (id, score) <- list, id > sepid]
+                          
+      treeOrNothing :: [(Int, Float)] -> Maybe ScoreTree
+      treeOrNothing [] = Nothing
+      treeOrNothing x  = Just $ buildtree x
+
+toRandom :: [a] -> [a]
+toRandom list = map (\(_, v) -> v) $ sortBy comp $ zip (randomkey list) list
+    where
+      comp (a, _) (b, _) = compare a b
+      randomkey list     = randomize $ randomize $ map (\(i, _) -> i) list
+                          
 -------------------------    
 data ScoreTable = ScoreTable { scores::[(Int, Float)] }
-data ScoreTree  = ScoreTree  { scoretree_id::Int, scoretree_value::Float, left::ScoreTree, right::ScoreTree }
-                
+data ScoreTree  = ScoreTree { scoretree_id::Int, scoretree_value::Float, left::Maybe ScoreTree, right::Maybe ScoreTree }
+
 class Similar a where
     toScoreTable :: a -> ScoreTable
                     
@@ -33,12 +42,9 @@ class Similar a where
     toScoreTree x = transform $ toScoreTable x
         where
           transform (ScoreTable scores) = buildtree $ toRandom scores
-          toRandom list = map (\(_, v) -> v) $ sortBy comp $ zip (randomkey list) list
-          comp (a, _) (b, _) = compare a b
-          randomkey list = randomize $ randomize $ map (\(i, _) -> i) list
               
     similarDistance :: a -> a -> Float
-    similarDistance x y = similar_distance (toScoreTree x) (toScoreTtree y)
+    similarDistance x y = distanceScore (toScoreTree x) (toScoreTree y)
 
 instance Similar User where
     toScoreTable user = ScoreTable (watch_repos user)
@@ -51,29 +57,26 @@ instance Similar Repository where
                                                    Just score -> Just ((user_id user), score)
 
 ---------------------------                                                                 
-similarDistance :: ScoreTree -> ScoreTree -> Float
-similarDistance sa sb = distanceScore
-                          (sameCouples sa sb)
-                          (baseScore (treeSize sa) (treeSize sb) (length $ sameCouples sa sb))
-
-distanceScore :: [((Int, Float), (Int, Float))] -> Float -> Float
-distanceScore []   _    = 0.0
-distanceScore list base = base / ((sqrt  $ sum $ [(scoreA - scoreB)^2 | ((_, scoreA), (_, scoreB)) <- list ]) + 1.0)
-
-sameCouples :: ScoreTree -> ScoreTree -> [((Int, Float), (Int, Float))]
-sameCouples scoresA scoresB = tryAll (findFrom scoresA) scoresB
+distanceScore :: ScoreTree -> ScoreTree -> Float
+distanceScore sa sb = base / ((sqrt  $ sum $ [(scoreA - scoreB)^2 | ((_, scoreA), (_, scoreB)) <- sameCouples sa sb ]) + 1.0)
     where
-      tryAll _ () = []
-      tryAll find (ScoreTree id value left right) =
-          case find id of
-            Nothing                            -> (tryAll f left) ++ (tryAll f right)
-            Just    (ScoreTree idA valueA _ _) -> ((id, value), (idA, valueA)):((tryAll f left) ++ (tryAll f right))
+      base               = (baseScore (treeSize sa) (treeSize sb) (length $ sameCouples sa sb))
+      baseScore a b same = default_score * (fromIntegral (same * 2) / fromIntegral (a + b))
+
+-----
+sameCouples :: ScoreTree -> ScoreTree -> [((Int, Float), (Int, Float))]
+sameCouples scoresA scoresB = tryAll (findFrom $ Just scoresA) (Just scoresB)
+    where
+      tryAll :: (Int -> Maybe ScoreTree) -> Maybe ScoreTree -> [((Int, Float), (Int, Float))]
+      tryAll _     Nothing                                = []
+      tryAll findA (Just (ScoreTree id value left right)) = 
+          case findA id of
+            Nothing                            -> (tryAll findA left) ++ (tryAll findA right)
+            Just    (ScoreTree idA valueA _ _) -> ((id, value), (idA, valueA)):((tryAll findA left) ++ (tryAll findA right))
                             
-      findFrom :: ScoreTree -> Int -> Maybe ScoreTree
-      findFrom ()                              target = Nothing
-      findFrom (ScoreTree id value left right) target = case id `compare` target of
-                                                          EQ -> Just (ScoreTree id value left right)
-                                                          GT -> (findFrom left target) 
-                                                          LT -> (findFrom right target) 
-          
-baseScore a b same = default_score * (fromIntegral (same * 2) / fromIntegral (a + b))
+      findFrom :: Maybe ScoreTree -> Int -> Maybe ScoreTree
+      findFrom Nothing  _                                    = Nothing
+      findFrom (Just (ScoreTree id value left right)) target = case id `compare` target of
+                                                               EQ -> Just (ScoreTree id value Nothing Nothing)
+                                                               GT -> (findFrom left target)
+                                                               LT -> (findFrom right target)
