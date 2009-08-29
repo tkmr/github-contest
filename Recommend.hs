@@ -3,9 +3,10 @@ import Data.Maybe
 import GcType
 import GcParser
 import Data.List
+import qualified Data.Map as Map    
 import System.IO.Unsafe
 
---util-------------------    
+--util-------------------
 randomize :: [Int] -> [Int]
 randomize list = sortBy comp list
                  where comp a b = compare (random ((a - b) * b)) (random ((a + b) * a))
@@ -32,7 +33,7 @@ toRandom list = map (\(_, v) -> v) $ sortBy comp $ zip (randomkey list) list
       randomkey list     = randomize $ randomize $ [0..(length list)]
 
 -------------------------    
-data ScoreTable = ScoreTable { scores::[(Int, Float)] }
+data ScoreTable = ScoreTable { scores::Map.Map Int Float }
 data ScoreTree  = ScoreTree { scoretree_id::Int, scoretree_value::Float, left::Maybe ScoreTree, right::Maybe ScoreTree }
 
 class Similar a where
@@ -41,7 +42,7 @@ class Similar a where
     toScoreTree :: a -> ScoreTree
     toScoreTree x = transform $ toScoreTable x
         where
-          transform (ScoreTable scores) = buildtree $ toRandom scores
+          transform (ScoreTable scores) = buildtree $ toRandom $ Map.toList scores
               
     similarDistance :: a -> a -> Float
     similarDistance x y = distanceScore (toScoreTree x) (toScoreTree y)
@@ -50,11 +51,7 @@ instance Similar User where
     toScoreTable user = ScoreTable (watch_repos user)
 
 instance Similar Repository where
-    toScoreTable repos = ScoreTable (mapMaybe (myScore $ repo_id repos) (watch_users repos))
-                            where
-                              myScore rid user = case Prelude.lookup rid (watch_repos user) of
-                                                   Nothing    -> Nothing
-                                                   Just score -> Just ((user_id user), score)
+    toScoreTable repos = ScoreTable (watch_users repos)
 
 ---------------------------                                                                 
 distanceScore :: ScoreTree -> ScoreTree -> Float

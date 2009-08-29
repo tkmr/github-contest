@@ -1,0 +1,71 @@
+	Sat Aug 29 21:21 2009 Time and Allocation Profiling Report  (Final)
+
+	   Main +RTS -p -RTS
+
+	total time  =       14.56 secs   (728 ticks @ 20 ms)
+	total alloc = 4,184,496,616 bytes  (excludes profiling overheads)
+
+COST CENTRE                    MODULE               %time %alloc
+
+addWatchUsers                  GcType                48.4   19.1
+main                           Main                  28.0   71.5
+parseRepos                     GcParser              16.9    0.1
+number                         GcParser               4.7    6.7
+repository_file                GcParser               1.0    1.5
+
+
+                                                                                               individual    inherited
+COST CENTRE              MODULE                                               no.    entries  %time %alloc   %time %alloc
+
+MAIN                     MAIN                                                   1           0   0.0    0.0   100.0  100.0
+  main                   Main                                                 193           0   0.0    0.0     0.0    0.0
+ CAF                     Main                                                 170           6   0.0    0.0    97.9   97.2
+  main                   Main                                                 176           1  28.0   71.5    97.9   97.2
+   $dmsimilarDistance    Recommend                                            206           1   0.0    0.0     0.0    0.0
+    $dmtoScoreTree       Recommend                                            210           2   0.0    0.0     0.0    0.0
+     toRandom            Recommend                                            212           2   0.0    0.0     0.0    0.0
+      randomize          Recommend                                            213           4   0.0    0.0     0.0    0.0
+     buildtree           Recommend                                            211         139   0.0    0.0     0.0    0.0
+    distanceScore        Recommend                                            207           1   0.0    0.0     0.0    0.0
+     treeSize            Recommend                                            214         280   0.0    0.0     0.0    0.0
+     sameCouples         Recommend                                            209           2   0.0    0.0     0.0    0.0
+   addWatchUsers         GcType                                               202       10000  48.4   19.1    48.4   19.1
+    addRepositoryUsers   GcType                                               203       10000   0.0    0.0     0.0    0.0
+   parseUsers            GcParser                                             194           1   0.1    0.1     1.6    2.4
+    runParse             GcParser                                             195           0   0.0    0.0     1.5    2.3
+     user_file           GcParser                                             199           0   0.0    0.1     1.5    2.3
+      default_score      GcParser                                             201           0   0.0    0.0     0.0    0.0
+      number             GcParser                                             200           0   1.5    2.2     1.5    2.2
+   parseRepos            GcParser                                             177           1  16.9    0.1    19.9    4.1
+    setRepositoryLang    GcType                                               204        1675   0.0    0.0     0.0    0.0
+    runParse             GcParser                                             181           0   0.1    0.0     3.0    4.0
+     language_file       GcParser                                             187           0   0.1    0.2     2.9    4.0
+      language_row       GcParser                                             189           0   0.7    0.7     1.9    2.6
+       number            GcParser                                             190           0   1.2    1.9     1.2    1.9
+      number             GcParser                                             188           0   0.8    1.2     0.8    1.2
+ CAF                     Text.Read.Lex                                        147           8   0.0    0.0     0.0    0.0
+ CAF                     GHC.Real                                             145           1   0.0    0.0     0.0    0.0
+ CAF                     GHC.Read                                             142           1   0.0    0.0     0.0    0.0
+ CAF                     GHC.Float                                            141          12   0.0    0.0     0.0    0.0
+ CAF                     GHC.Int                                              136           1   0.0    0.0     0.0    0.0
+ CAF                     Data.HashTable                                       127           1   0.0    0.0     0.0    0.0
+ CAF                     GHC.Handle                                           122           7   0.0    0.0     0.0    0.0
+ CAF                     System.Posix.Internals                               106           7   0.0    0.0     0.0    0.0
+ CAF                     GcType                                                91           1   0.0    0.0     0.0    0.0
+ CAF                     GcParser                                              90          14   0.0    0.0     2.1    2.8
+  default_score          GcParser                                             208           1   0.0    0.0     0.0    0.0
+  user_file              GcParser                                             196           1   0.0    0.0     0.0    0.0
+   default_score         GcParser                                             198           0   0.0    0.0     0.0    0.0
+   number                GcParser                                             197           0   0.0    0.0     0.0    0.0
+  language_row           GcParser                                             184           1   0.0    0.0     0.0    0.0
+   number                GcParser                                             185           0   0.0    0.0     0.0    0.0
+  language_file          GcParser                                             182           1   0.0    0.0     0.0    0.0
+   language_row          GcParser                                             186           0   0.0    0.0     0.0    0.0
+   number                GcParser                                             183           0   0.0    0.0     0.0    0.0
+  number                 GcParser                                             180           1   0.0    0.0     0.0    0.0
+  repository_file        GcParser                                             179           1   0.0    0.0     0.0    0.0
+  runParse               GcParser                                             178           1   0.0    0.0     2.1    2.8
+   repository_file       GcParser                                             191           0   1.0    1.5     2.1    2.8
+    number               GcParser                                             192           0   1.1    1.4     1.1    1.4
+ CAF                     Recommend                                             89           7   0.0    0.0     0.0    0.0
+  $f1                    Recommend                                            205           1   0.0    0.0     0.0    0.0

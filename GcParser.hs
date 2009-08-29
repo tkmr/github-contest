@@ -1,7 +1,6 @@
 module GcParser where
 import GcType
-import Data.Map as Map
-import Data.HashTable
+import qualified Data.Map as Map
 import Text.ParserCombinators.Parsec
 
 --for debug
@@ -25,27 +24,24 @@ runParse parser (x:xs) = case (parse parser "" x) of
                            Right datas -> datas:(runParse parser xs)
                                           
 --Parser
-parseRepos :: [String] -> [String] -> IO (HashTable Int Repository)
-parseRepos repo_source lang_source = newtable (runParse repository_file repo_source) (runParse language_file lang_source)
+parseRepos :: [String] -> [String] -> Map.Map Int Repository
+parseRepos repo_source lang_source = foldl (addrepos $ Map.fromList langs) Map.empty repos
     where
-      newtable repos langs = do table <- new (==) hashInt :: IO (HashTable Int Repository)
-                                foldr (>>) (return table) $ (map (addrepos table langs) repos)
+      langs = runParse language_file lang_source
+      repos = runParse repository_file repo_source
 
-      addrepos table langs repository = case Prelude.lookup (repo_id repository) langs of
-                                          Nothing -> insert table (repo_id repository) repository
-                                          Just lang -> insert table (repo_id repository) (setRepositoryLang repository lang)
+      addrepos langmap reposmap repository = case Map.lookup (repo_id repository) langmap of
+                                               Nothing   -> Map.insert (repo_id repository) repository reposmap
+                                               Just lang -> Map.insert (repo_id repository) (setRepositoryLang repository lang) reposmap
 
-
-parseUsers :: [String] -> IO (HashTable Int User)
-parseUsers user_source = newtable $ runParse user_file user_source
+parseUsers :: [String] -> Map.Map Int User
+parseUsers user_source = foldl adduser Map.empty $ runParse user_file user_source
     where
-      newtable users = do table <- new (==) hashInt :: IO (HashTable Int User)
-                          foldr (>>) (return table) $ map (adduser table) users
-
-      adduser table (User id repos) = do user <- Data.HashTable.lookup table id
-                                         case user of
-                                           Nothing                -> update table id (User id repos)
-                                           Just (User _ oldrepos) -> update table id (User id (oldrepos ++ repos)) --(adjust_score $ oldrepos ++ repos))
+      adduser usermap user = case Map.lookup (user_id user) usermap of
+                               Nothing                -> Map.insert (user_id user) user usermap
+                               Just (User _ oldrepos) -> Map.update (merge $ watch_repos user) (user_id user) usermap
+                                                         
+      merge newrepos (User id oldrepos) = Just $ User id (Map.union oldrepos newrepos)
 
       adjust_score repos = map (\(id, score) -> (id, (default_score / (fromIntegral $ length repos)))) repos
 
@@ -69,9 +65,9 @@ repository_file = do { id <- number
                      ; many (noneOf ",")
                      ; do { try(char ',')
                           ; forked <- number
-                          ; return $ ForkedRepository id name project [] forked []
+                          ; return $ ForkedRepository id name project Map.empty forked Map.empty
                           }
-                       <|> (return $ Repository id name project [] [])
+                       <|> (return $ Repository id name project Map.empty Map.empty)
                      }
                   <?> "repo.txt"
 
@@ -84,11 +80,11 @@ user_file = do { id <- number
             <?> "data.txt"
 
 
-language_file :: Parser (Int, [(Language, Int)])
+language_file :: Parser (Int, Map.Map Language Int)
 language_file = do { repo_id <- number
                    ; char ':'
                    ; langs <- many1 language_row
-                   ; return (repo_id, langs)
+                   ; return (repo_id, Map.fromList langs)
                    }
                 <?> "lang.txt"
 
@@ -97,11 +93,11 @@ language_row = do { try(char ',')
                   ; lang_name <- many1 (noneOf ";")
                   ; char ';'
                   ; row <- number
-                  ; return (Language lang_name, row)
+                  ; return (languageFromStr lang_name, row)
                   }
                <|>
                do { lang_name <- many1 (noneOf ";")
                   ; char ';'
                   ; row <- number
-                  ; return (Language lang_name, row)
+                  ; return (languageFromStr lang_name, row)
                   }
