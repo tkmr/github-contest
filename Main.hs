@@ -10,15 +10,15 @@ import Text.ParserCombinators.Parsec
 main = do rs <- readFile "data/repos.txt"
           ls <- readFile "data/lang.txt"
           us <- readFile "data/data.txt"
-          repotable <- parseRepos (take 1000 $ lines rs) (take 10 $ lines ls)
-          usertable <- parseUsers $ take 100000 $ lines us
+          repotable <- parseRepos (take 10000 $ lines rs) (take 10000 $ lines ls)
+          usertable <- parseUsers $ take 10000 $ lines us
 
           users <- toList usertable
           repos <- toList repotable
           repos2 <- withUsers users repos
                     
           --print $ take 20 $ reverse $ sortBy comp $ map score $ testlist 100 $ hasItem [100..130] $ hevyuser users
-          print $ take 10 $ reverse $ sortBy comp $ map repoScore $ take 1000000 $
+          print $ take 10 $ reverse $ sortBy comp $ map repoScore $ take 10000 $
                     [(x, y) | x <- (hevyrepos repos2), y <- (hevyrepos repos2), (repo_id x) < (repo_id y)]
 
                                         

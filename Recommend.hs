@@ -4,16 +4,16 @@ import GcType
 import GcParser
 import Data.List
 import System.IO.Unsafe
-import System.Random
 
 --util-------------------    
 randomize :: [Int] -> [Int]
 randomize list = sortBy comp list
-                 where comp a b = compare (random (a * b)) (random (a * b))
-                       random n = unsafePerformIO $ getStdRandom (randomR (1,n))
+                 where comp a b = compare (random ((a - b) * b)) (random ((a + b) * a))
+                       random n = mod (n ^ 3) 9876823 
 
 treeSize :: Maybe ScoreTree -> Int
-treeSize (Just (ScoreTree _ _ l r)) = 1 + (sum $ mapMaybe treeSize l:r:[])
+treeSize Nothing                    = 0
+treeSize (Just (ScoreTree _ _ l r)) = 1 + (treeSize l) + (treeSize r)
 
 buildtree :: [(Int, Float)] -> ScoreTree
 buildtree ((id, score):xs) = ScoreTree id score (lnodes xs id) (rnodes xs id)
@@ -29,8 +29,8 @@ toRandom :: [a] -> [a]
 toRandom list = map (\(_, v) -> v) $ sortBy comp $ zip (randomkey list) list
     where
       comp (a, _) (b, _) = compare a b
-      randomkey list     = randomize $ randomize $ map (\(i, _) -> i) list
-                          
+      randomkey list     = randomize $ randomize $ [0..(length list)]
+
 -------------------------    
 data ScoreTable = ScoreTable { scores::[(Int, Float)] }
 data ScoreTree  = ScoreTree { scoretree_id::Int, scoretree_value::Float, left::Maybe ScoreTree, right::Maybe ScoreTree }
@@ -60,7 +60,7 @@ instance Similar Repository where
 distanceScore :: ScoreTree -> ScoreTree -> Float
 distanceScore sa sb = base / ((sqrt  $ sum $ [(scoreA - scoreB)^2 | ((_, scoreA), (_, scoreB)) <- sameCouples sa sb ]) + 1.0)
     where
-      base               = (baseScore (treeSize sa) (treeSize sb) (length $ sameCouples sa sb))
+      base               = (baseScore (treeSize $ Just sa) (treeSize $ Just sb) (length $ sameCouples sa sb))
       baseScore a b same = default_score * (fromIntegral (same * 2) / fromIntegral (a + b))
 
 -----
