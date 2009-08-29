@@ -1,5 +1,6 @@
 module GcParser where
 import GcType
+import Data.Map as Map
 import Data.HashTable
 import Text.ParserCombinators.Parsec
 
@@ -78,7 +79,7 @@ user_file :: Parser User
 user_file = do { id <- number
                ; char ':'
                ; repo_id <- number
-               ; return $ User id [(repo_id, default_score)]
+               ; return $ User id $ Map.fromList [(repo_id, default_score)]
                }
             <?> "data.txt"
 
