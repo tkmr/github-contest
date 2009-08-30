@@ -1,0 +1,106 @@
+	Sun Aug 30 18:59 2009 Time and Allocation Profiling Report  (Final)
+
+	   Main +RTS -p -K50M -RTS
+
+	total time  =        2.58 secs   (129 ticks @ 20 ms)
+	total alloc = 1,148,183,048 bytes  (excludes profiling overheads)
+
+COST CENTRE                    MODULE               %time %alloc
+
+number                         GcParser              22.5   24.4
+sameBitOctets                  Bloom                 14.0    6.4
+convert                        Bloom                 12.4   16.7
+main                           Main                  12.4   15.1
+zerolist                       Bloom                  7.0   11.7
+repository_file                GcParser               6.2    5.4
+language_row                   GcParser               5.4    2.5
+fill                           Bloom                  4.7    8.2
+comp                           Main                   3.1    0.0
+orBitOctets                    Bloom                  1.6    1.3
+hash                           Bloom                  1.6    2.8
+parseUsers                     GcParser               1.6    0.5
+language_file                  GcParser               1.6    0.6
+transform                      Main                   1.6    0.6
+
+
+                                                                                               individual    inherited
+COST CENTRE              MODULE                                               no.    entries  %time %alloc   %time %alloc
+
+MAIN                     MAIN                                                   1           0   0.0    0.0   100.0  100.0
+  main                   Main                                                 228           0   0.0    0.0     0.0    0.0
+ CAF                     Main                                                 200          10   0.0    0.0    90.7   89.2
+  main                   Main                                                 206           1  12.4   15.1    90.7   89.2
+   getUidRidMapper       Main                                                 253           1   0.0    0.1     0.0    0.1
+   repoScore             Main                                                 242      152076   0.8    0.7    41.1   44.9
+    distanceScore        Recommend                                            243      152076   0.8    0.6    40.3   44.2
+     sameCouples         Recommend                                            266        5166   0.8    0.1     0.8    0.1
+     $dmisExists         Bloom                                                245      152076   0.0    0.2    38.8   43.5
+      hash               Bloom                                                247      198132   1.6    2.6    24.8   37.0
+       convert           Bloom                                                250     1987914  12.4   15.6    12.4   15.6
+       fill              Bloom                                                248      152076   4.7    7.7    10.9   18.7
+        zerolist         Bloom                                                249     3030594   6.2   11.0     6.2   11.0
+      sameBitOctets      Bloom                                                246     3060866  14.0    6.4    14.0    6.4
+   comp                  Main                                                 241     2159922   3.1    0.0     3.1    0.0
+   parseUsers            GcParser                                             231           1   1.6    0.5    11.6    9.0
+    runParse             GcParser                                             232           0   0.0    0.1    10.1    8.5
+     user_file           GcParser                                             235           0   0.8    0.4    10.1    8.4
+      default_score      GcParser                                             237        1320   0.0    0.0     0.0    0.0
+      number             GcParser                                             236           0   9.3    8.0     9.3    8.0
+   parseRepos            GcParser                                             212           1   0.8    0.6    18.6   15.3
+    setRepositoryLang    GcType                                               239        1675   0.0    0.0     0.0    0.0
+    runParse             GcParser                                             218           0   0.0    0.1    17.8   14.7
+     language_file       GcParser                                             224           0   1.6    0.6    17.8   14.6
+      language_row       GcParser                                             226           0   5.4    2.5    14.0    9.6
+       number            GcParser                                             227           0   8.5    7.1     8.5    7.1
+      number             GcParser                                             225           0   2.3    4.4     2.3    4.4
+   withUsers             Main                                                 211           1   0.0    0.0     1.6    0.7
+    transform            Main                                                 230           1   1.6    0.6     1.6    0.6
+    withUser             Main                                                 229       10000   0.0    0.0     0.0    0.0
+     setRepositoryUsers  GcType                                               240        6723   0.0    0.0     0.0    0.0
+   hevyrepos             Main                                                 210           1   0.0    0.1     0.0    0.1
+   $dmtoScoreTables      Recommend                                            209           1   0.0    0.0     2.3    3.9
+    makefilter           Recommend                                            251         551   0.0    0.2     2.3    3.9
+     $dminitFilter       Bloom                                                259        9676   0.0    0.0     2.3    3.7
+      hash               Bloom                                                261       15371   0.0    0.2     0.8    2.4
+       convert           Bloom                                                264      141135   0.0    1.1     0.0    1.1
+       fill              Bloom                                                262        9676   0.0    0.5     0.8    1.1
+        zerolist         Bloom                                                263      178173   0.8    0.6     0.8    0.6
+      orBitOctets        Bloom                                                260      300274   1.6    1.3     1.6    1.3
+   appendName            Main                                                 207           1   0.0    0.0     0.0    0.0
+ CAF                     Text.Read.Lex                                        177           8   0.0    0.0     0.0    0.0
+ CAF                     GHC.Real                                             175           1   0.0    0.0     0.0    0.0
+ CAF                     GHC.Read                                             172           1   0.0    0.0     0.0    0.0
+ CAF                     GHC.Float                                            171          11   0.8    0.0     0.8    0.0
+ CAF                     GHC.Int                                              166           1   0.0    0.0     0.0    0.0
+ CAF                     GHC.Handle                                           152           7   0.0    0.0     0.0    0.0
+ CAF                     GHC.Conc                                             151           1   0.0    0.0     0.0    0.0
+ CAF                     System.Posix.Internals                               136           7   0.0    0.0     0.0    0.0
+ CAF                     GcParser                                             106          20   0.0    0.4     8.5   10.8
+  default_score          GcParser                                             265           1   0.0    0.0     0.0    0.0
+  user_file              GcParser                                             233           1   0.0    0.0     0.0    0.0
+   default_score         GcParser                                             238           0   0.0    0.0     0.0    0.0
+   number                GcParser                                             234           0   0.0    0.0     0.0    0.0
+  language_row           GcParser                                             221           1   0.0    0.0     0.0    0.0
+   number                GcParser                                             222           0   0.0    0.0     0.0    0.0
+  language_file          GcParser                                             219           1   0.0    0.0     0.0    0.0
+   language_row          GcParser                                             223           0   0.0    0.0     0.0    0.0
+   number                GcParser                                             220           0   0.0    0.0     0.0    0.0
+  number                 GcParser                                             215           1   0.0    0.0     0.0    0.0
+  repository_file        GcParser                                             214           1   0.0    0.0     0.0    0.0
+  runParse               GcParser                                             213           1   0.0    0.1     8.5   10.4
+   repository_file       GcParser                                             216           0   6.2    5.4     8.5   10.3
+    number               GcParser                                             217           0   2.3    4.9     2.3    4.9
+ CAF                     Recommend                                            105          10   0.0    0.0     0.0    0.0
+  main                   Main                                                 267           0   0.0    0.0     0.0    0.0
+   repoScore             Main                                                 268           0   0.0    0.0     0.0    0.0
+    distanceScore        Recommend                                            269           0   0.0    0.0     0.0    0.0
+     sameCouples         Recommend                                            270           0   0.0    0.0     0.0    0.0
+  $dminitFilter          Bloom                                                252          15   0.0    0.0     0.0    0.0
+   hash                  Bloom                                                255          27   0.0    0.0     0.0    0.0
+    convert              Bloom                                                258         221   0.0    0.0     0.0    0.0
+    fill                 Bloom                                                256          15   0.0    0.0     0.0    0.0
+     zerolist            Bloom                                                257         274   0.0    0.0     0.0    0.0
+   orBitOctets           Bloom                                                254         462   0.0    0.0     0.0    0.0
+  $f1                    Recommend                                            208           1   0.0    0.0     0.0    0.0
+ CAF                     Bloom                                                104           5   0.0    0.0     0.0    0.0
+  $f1                    Bloom                                                244           1   0.0    0.0     0.0    0.0

@@ -8,8 +8,8 @@ import Recommend
 import qualified Data.Map as Map
 import Text.ParserCombinators.Parsec
 
-main = do loadNum  <- return $ 80000 -- 80000
-          scoreNum <- return $ 1000000
+main = do loadNum  <- return $ 40000 -- 80000
+          scoreNum <- return $ 10000000
           rs <- readFile "data/repos.txt"
           ls <- readFile "data/lang.txt"
           us <- readFile "data/data.txt"
@@ -40,7 +40,7 @@ repoScore (r1, r2) = ((distanceScore r1 r2), (scoreTableId r1), (scoreTableId r2
 
 comp (score, a, b) (score2, a2, b2) = compare score score2
                            
-hevyrepos repos = filter (\repos -> (Map.size (watch_users repos)) > 2) $ map snd $ Map.toList repos
+hevyrepos repos = filter (\repos -> (Map.size (watch_users repos)) > 4) $ map snd $ Map.toList repos
                                                    
 withUsers users repos = Map.map (withUser $ transform users) repos
 
