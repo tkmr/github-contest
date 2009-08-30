@@ -2,31 +2,28 @@ module Bloom where
 import Data.Word (Word32, Word8)
 import Data.Bits
     
-type BloomFilter = [Word32]
+type BloomFilter = Integer
 
 class Bloom a where
     initFilter :: [a] -> BloomFilter
     initFilter (x:[]) = (bloomHash x)
-    initFilter (x:xs) = orBitOctets (bloomHash x) (initFilter xs)
+    initFilter (x:xs) = (bloomHash x) .|. (initFilter xs)
 
     bloomHash :: a -> BloomFilter
-
+                 
     isExists :: BloomFilter -> a -> Bool
-    isExists filter x = (sameBitOctets (bloomHash x)  filter)
+    isExists filter x = ((bloomHash x) .&. filter) == (bloomHash x)
 
 instance Bloom Int where
     bloomHash x = hash x
 
-hash :: Int -> [Word32]
-hash x | x <= 1024 = fill $ reverse $ convert x 1
-hash x             = hash (x `mod` 1024)
-
-fill ls = (zerolist (32 - (length ls))) ++ ls
-
-convert :: Int -> Int -> [Word32]
-convert x i | (x - i) < 32 = (shiftL (1::Word32) (x - i)):[]
-convert x i                = 0:(convert x (i + 32))
-
+hash :: Int -> BloomFilter
+hash x | x <= 500 = bit (x - 1)
+hash x            = hash (x `mod` 500)
+                     
+-----
+fill ls = (zerolist (16 - (length ls))) ++ ls
+            
 zerolist :: Int -> [Word32]
 zerolist 0         = []
 zerolist n | n < 0 = []             
