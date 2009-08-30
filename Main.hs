@@ -8,7 +8,7 @@ import Recommend
 import qualified Data.Map as Map
 import Text.ParserCombinators.Parsec
 
-main = do loadNum  <- return $ 10000 -- 80000
+main = do loadNum  <- return $ 80000 -- 80000
           scoreNum <- return $ 1000000
           rs <- readFile "data/repos.txt"
           ls <- readFile "data/lang.txt"
@@ -21,7 +21,8 @@ main = do loadNum  <- return $ 10000 -- 80000
           scores        <- return $ toScoreTables scoreidmapper repos2
                     
           --print $ take 20 $ reverse $ sortBy comp $ map score $ testlist 100 $ hasItem [100..130] $ hevyuser users
-          print $ appendName repotable $ take 10 $ reverse $ sortBy comp $ map repoScore $ take scoreNum $ [(x, y) | x <- scores, y <- scores, (scoreTableId x) < (scoreTableId y)]
+          print $ appendName repotable $ take 10 $ reverse $ sortBy comp $ map repoScore $ take scoreNum $
+                    [(x, y) | x <- scores, y <- scores, (scoreTableId x) < (scoreTableId y)]
 
           print "end"
 
